@@ -1,104 +1,141 @@
 import streamlit as st
-import plotly.graph_objects as go
 import pandas as pd
+import matplotlib.pyplot as plt
+from PIL import Image
 
-st.set_page_config(layout="wide")
+# Simulasi data
+data = {
+    "Revenue": {"value": 20_000_000, "target": 100_000_000, "change": 12},
+    "Expense": {"value": 8_500_000, "target": 50_000_000, "change": 5},
+    "Productivity Index": {"value": 1.88, "target": 2.93, "change": 15},
+    "Manpower Fulfillment": {"value": 102, "target": 122},
+    "Number Active Customer": {"value": 153, "target": 225, "change": 3},
+    "Product Churn Rate": {"value": 7, "target": 0, "change": None},
+    "Average Product CSAT": {"value": 4.0, "target": 4.45, "change": None},
+    "Product NPS": {"value": 70, "target": 90, "change": None},
+    "On Time Product Delivery Rate": {"value": 92, "target": None, "change": None},
+    "Defect Rate": {"value": 5, "target": 0, "change": None},
+    "SLA Achievement": {"value": 95, "target": None, "change": None},
+    "Deployment Success Rate": {"value": [80, 82, 81, 83, 84, 85, 86, 85, 84, 83, 82, 81], "target": None, "change": None},
+    "Talent Turnover Rate": {"value": 7, "target": None, "change": 5},
+}
+
+# Fungsi untuk membuat KPI Card
+def kpi_card(title, value, target, change, icon=None):
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        if icon:
+            st.image(icon, width=30)
+    with col2:
+        st.metric(
+            label=title,
+            value=f"{value}%",
+            delta=f"{change}%" if change else None,
+            delta_color="inverse" if change and change > 0 else "off"
+        )
+        if target:
+            st.write(f"Target: {target}%")
+        st.progress(value / 100)
+
+# Header
 st.title("XYZ Indicator")
-st.caption("\U0001F4C5 December 2025")
+st.date_input("Select Month", key="selected_month")
 
-# --------- Helper Functions ---------
-def kpi_card(title, value, target, percent, delta=None, bar_color="green"):
-    st.markdown(f"""
-        <div style='background-color:#f9f9f9; padding:20px; border-radius:15px;'>
-            <h5>{title}</h5>
-            <h2>{value}</h2>
-            {'<span style="color:green;">⬆ ' + delta + '</span><br>' if delta else ''}
-            <div style='font-size:14px;'>Target: {target}</div>
-            <progress value='{percent}' max='100' style='width:100%; height:10px;'></progress>
-            <div style='font-size:12px;'>{percent}%</div>
-        </div>
-    """, unsafe_allow_html=True)
-
-def circular_gauge(label, value, color):
-    fig = go.Figure(go.Indicator(
-        mode = "gauge+number",
-        value = value,
-        domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': label},
-        gauge = {'axis': {'range': [None, 100]}, 'bar': {'color': color}}
-    ))
-    fig.update_layout(height=200, margin=dict(t=0, b=0, l=0, r=0))
-    st.plotly_chart(fig, use_container_width=True)
-
-def line_chart(title):
-    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    values = [90, 85, 88, 95, 93, 87, 89, 92, 94, 90, 91, 88]
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=months, y=values, mode='lines+markers'))
-    fig.update_layout(title=title, height=200, margin=dict(t=10, b=10))
-    st.plotly_chart(fig, use_container_width=True)
-
-def bar_chart(title):
-    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    values = [80, 85, 82, 88, 91, 89, 90, 93, 94, 95, 97, 98]
-    fig = go.Figure([go.Bar(x=months, y=values)])
-    fig.update_layout(title=title, height=200, margin=dict(t=10, b=10))
-    st.plotly_chart(fig, use_container_width=True)
-
-# --------- Row 1 ---------
-col1, col2, col3, col4, col5 = st.columns([1.2,1.2,1.2,1,1.4])
+# Row 1: Revenue, Expense, Productivity Index, Manpower Fulfillment
+col1, col2, col3, col4 = st.columns(4)
 with col1:
-    kpi_card("Revenue", "$20M", "$100M", 20, "12%")
+    kpi_card("Revenue", data["Revenue"]["value"], data["Revenue"]["target"], data["Revenue"]["change"], icon="💰")
 with col2:
-    kpi_card("Expense", "$8.5M", "$50M", 17, "5%")
+    kpi_card("Expense", data["Expense"]["value"], data["Expense"]["target"], data["Expense"]["change"], icon="💸")
 with col3:
-    kpi_card("Productivity Index", "1.88", "2.93", 64, "15%")
+    kpi_card("Productivity Index", data["Productivity Index"]["value"], data["Productivity Index"]["target"], data["Productivity Index"]["change"], icon="📈")
 with col4:
-    kpi_card("Manpower Fulfillment", "102", "122", 67)
-with col5:
-    st.markdown("""
-    <div style='background-color:#f9f9f9; padding:20px; border-radius:15px;'>
-        <h5>Recruitment Funnel</h5>
-        <ul style='font-size:13px; line-height:1.8;'>
-            <li>Qualified Pool: 100</li>
-            <li>HC Interview: 70</li>
-            <li>User Interview: 50</li>
-            <li>Offering: 25</li>
-            <li>Successful Hire: 20</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
+    st.metric(label="Manpower Fulfillment", value=f"{data['Manpower Fulfillment']['value']} of {data['Manpower Fulfillment']['target']}")
+    # Funnel Chart
+    labels = ['Qualified Pool', 'HC Interview', 'User Interview', 'Offering', 'Successful Hire']
+    values = [100, 70, 40, 25, 20]
+    colors = ['#FF6B6B', '#FFD166', '#1E8449', '#00BFFF', '#8E44AD']
+    fig, ax = plt.subplots()
+    ax.pie(values, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors)
+    ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+    st.pyplot(fig)
 
-# --------- Row 2 ---------
-col1, col2, col3, col4, col5 = st.columns(5)
+# Row 2: Number Active Customer, Product Churn Rate, Average Product CSAT, Product NPS
+col1, col2, col3, col4 = st.columns(4)
 with col1:
-    kpi_card("Active Customer", "153", "225", 68, "3")
+    kpi_card("Number Active Customer", data["Number Active Customer"]["value"], data["Number Active Customer"]["target"], data["Number Active Customer"]["change"], icon="👥")
 with col2:
-    circular_gauge("Churn Rate", 7, "green")
+    st.metric(label="Product Churn Rate", value=f"{data['Product Churn Rate']['value']}%", delta=f"{data['Product Churn Rate']['value']}%")
+    # Gauge Chart for Churn Rate
+    fig, ax = plt.subplots()
+    ax.set_title("Product Churn Rate")
+    ax.pie([data['Product Churn Rate']['value'], 100 - data['Product Churn Rate']['value']], colors=['red', 'green'], wedgeprops=dict(width=0.3))
+    ax.text(0, 0, f"{data['Product Churn Rate']['value']}%", ha='center', va='center', fontsize=14)
+    st.pyplot(fig)
 with col3:
-    st.markdown("<h5>Product CSAT</h5><h2>⭐ 4.0</h2><div>Target: 4.45</div>", unsafe_allow_html=True)
+    st.metric(label="Average Product CSAT", value=data["Average Product CSAT"]["value"], delta=f"{data['Average Product CSAT']['value']}/5")
+    # Star Rating
+    stars = "⭐" * int(data["Average Product CSAT"]["value"])
+    st.write(stars)
 with col4:
-    circular_gauge("Product NPS", 70, "purple")
-with col5:
-    st.markdown("""
-        <h5>Employee Competency</h5>
-        <img src='https://quickchart.io/chart?c={type:bar,horizontal:true,data:{labels:["Dev","SA","BA","PM"],datasets:[{label:"Jr",data:[90,90,85,85]},{label:"Mid",data:[85,85,90,90]},{label:"Sr",data:[90,90,90,90]},{label:"Expert",data:[98,98,98,98]}]}}' width='100%'>
-    """, unsafe_allow_html=True)
+    st.metric(label="Product NPS", value=f"{data['Product NPS']['value']}%", delta=f"{data['Product NPS']['value']}%")
+    # Gauge Chart for NPS
+    fig, ax = plt.subplots()
+    ax.set_title("Product NPS")
+    ax.pie([data['Product NPS']['value'], 100 - data['Product NPS']['value']], colors=['purple', 'white'], wedgeprops=dict(width=0.3))
+    ax.text(0, 0, f"{data['Product NPS']['value']}%", ha='center', va='center', fontsize=14)
+    st.pyplot(fig)
 
-# --------- Row 3 ---------
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+# Row 3: On Time Product Delivery Rate, Defect Rate, SLA Achievement, Deployment Success Rate
+col1, col2, col3, col4 = st.columns(4)
 with col1:
-    circular_gauge("On Time Delivery", 92, "green")
+    st.metric(label="On Time Product Delivery Rate", value=f"{data['On Time Product Delivery Rate']['value']}%", delta=f"{data['On Time Product Delivery Rate']['value']}%")
+    # Circle Gauge
+    fig, ax = plt.subplots()
+    ax.set_title("On Time Product Delivery Rate")
+    ax.pie([data['On Time Product Delivery Rate']['value'], 100 - data['On Time Product Delivery Rate']['value']], colors=['green', 'white'], wedgeprops=dict(width=0.3))
+    ax.text(0, 0, f"{data['On Time Product Delivery Rate']['value']}%", ha='center', va='center', fontsize=14)
+    st.pyplot(fig)
 with col2:
-    circular_gauge("Defect Rate", 5, "red")
+    st.metric(label="Defect Rate", value=f"{data['Defect Rate']['value']}%", delta=f"{data['Defect Rate']['value']}%")
+    # Circle Gauge
+    fig, ax = plt.subplots()
+    ax.set_title("Defect Rate")
+    ax.pie([data['Defect Rate']['value'], 100 - data['Defect Rate']['value']], colors=['red', 'green'], wedgeprops=dict(width=0.3))
+    ax.text(0, 0, f"{data['Defect Rate']['value']}%", ha='center', va='center', fontsize=14)
+    st.pyplot(fig)
 with col3:
-    circular_gauge("SLA Achievement", 95, "green")
+    st.metric(label="SLA Achievement", value=f"{data['SLA Achievement']['value']}%", delta=f"{data['SLA Achievement']['value']}%")
+    # Circle Gauge
+    fig, ax = plt.subplots()
+    ax.set_title("SLA Achievement")
+    ax.pie([data['SLA Achievement']['value'], 100 - data['SLA Achievement']['value']], colors=['green', 'white'], wedgeprops=dict(width=0.3))
+    ax.text(0, 0, f"{data['SLA Achievement']['value']}%", ha='center', va='center', fontsize=14)
+    st.pyplot(fig)
 with col4:
-    line_chart("Deployment Success Rate")
-with col5:
-    bar_chart("SIT Quality Index")
-with col6:
-    circular_gauge("Talent Turnover", 7, "green")
-    st.markdown("<h2 style='text-align:center;'>100 employees</h2><p style='color:red; text-align:center;'>↓ 5%</p>", unsafe_allow_html=True)
+    st.metric(label="Deployment Success Rate", value=f"{sum(data['Deployment Success Rate']['value'])/len(data['Deployment Success Rate']['value'])}%", delta=f"{sum(data['Deployment Success Rate']['value'])/len(data['Deployment Success Rate']['value'])}%")
+    # Line Chart
+    fig, ax = plt.subplots()
+    ax.plot(range(1, 13), data['Deployment Success Rate']['value'])
+    ax.set_xticks(range(1, 13))
+    ax.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+    ax.set_ylabel("Success Rate (%)")
+    st.pyplot(fig)
 
-st.markdown("<br><hr><center>Designed by AI prompt · Streamlit</center>", unsafe_allow_html=True)
+# Row 4: SIT Quality Index, Talent Turnover Rate
+col1, col2 = st.columns(2)
+with col1:
+    st.metric(label="SIT Quality Index", value="85", delta="+5")
+    # Bar Chart
+    fig, ax = plt.subplots()
+    ax.bar(["Dev", "Mid", "Sr", "Expert"], [85, 89, 85, 89])
+    ax.set_ylabel("Score")
+    st.pyplot(fig)
+with col2:
+    st.metric(label="Talent Turnover Rate", value=f"{data['Talent Turnover Rate']['value']}%", delta=f"{data['Talent Turnover Rate']['change']}%")
+    # Circle Gauge
+    fig, ax = plt.subplots()
+    ax.set_title("Talent Turnover Rate")
+    ax.pie([data['Talent Turnover Rate']['value'], 100 - data['Talent Turnover Rate']['value']], colors=['red', 'green'], wedgeprops=dict(width=0.3))
+    ax.text(0, 0, f"{data['Talent Turnover Rate']['value']}%", ha='center', va='center', fontsize=14)
+    st.pyplot(fig)
