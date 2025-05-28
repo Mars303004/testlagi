@@ -1,141 +1,455 @@
 import streamlit as st
+import plotly.graph_objects as go
+import plotly.express as px
 import pandas as pd
-import matplotlib.pyplot as plt
-from PIL import Image
+import numpy as np
+from datetime import datetime, timedelta
 
-# Simulasi data
-data = {
-    "Revenue": {"value": 20_000_000, "target": 100_000_000, "change": 12},
-    "Expense": {"value": 8_500_000, "target": 50_000_000, "change": 5},
-    "Productivity Index": {"value": 1.88, "target": 2.93, "change": 15},
-    "Manpower Fulfillment": {"value": 102, "target": 122},
-    "Number Active Customer": {"value": 153, "target": 225, "change": 3},
-    "Product Churn Rate": {"value": 7, "target": 0, "change": None},
-    "Average Product CSAT": {"value": 4.0, "target": 4.45, "change": None},
-    "Product NPS": {"value": 70, "target": 90, "change": None},
-    "On Time Product Delivery Rate": {"value": 92, "target": None, "change": None},
-    "Defect Rate": {"value": 5, "target": 0, "change": None},
-    "SLA Achievement": {"value": 95, "target": None, "change": None},
-    "Deployment Success Rate": {"value": [80, 82, 81, 83, 84, 85, 86, 85, 84, 83, 82, 81], "target": None, "change": None},
-    "Talent Turnover Rate": {"value": 7, "target": None, "change": 5},
-}
+# Page configuration
+st.set_page_config(
+    page_title="XYZ Indicator Dashboard",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# Fungsi untuk membuat KPI Card
-def kpi_card(title, value, target, change, icon=None):
-    col1, col2 = st.columns([1, 4])
-    with col1:
-        if icon:
-            st.image(icon, width=30)
-    with col2:
-        st.metric(
-            label=title,
-            value=f"{value}%",
-            delta=f"{change}%" if change else None,
-            delta_color="inverse" if change and change > 0 else "off"
-        )
-        if target:
-            st.write(f"Target: {target}%")
-        st.progress(value / 100)
+# Custom CSS
+st.markdown("""
+<style>
+    .main-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 0;
+        margin-bottom: 30px;
+    }
+    
+    .main-title {
+        font-size: 48px;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .metric-card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border-left: 5px solid;
+        margin-bottom: 20px;
+        height: 180px;
+    }
+    
+    .metric-card.revenue { border-left-color: #27ae60; }
+    .metric-card.expense { border-left-color: #f1c40f; }
+    .metric-card.productivity { border-left-color: #16a085; }
+    .metric-card.manpower { border-left-color: #7f8c8d; }
+    
+    .metric-value {
+        font-size: 36px;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+    
+    .metric-change {
+        color: #27ae60;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+    
+    .metric-target {
+        color: #7f8c8d;
+        font-size: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .progress-bar {
+        background-color: #ecf0f1;
+        border-radius: 10px;
+        height: 8px;
+        overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-green { background-color: #27ae60; }
+    .progress-yellow { background-color: #f1c40f; }
+    .progress-teal { background-color: #16a085; }
+    .progress-gray { background-color: #7f8c8d; }
+    
+    .small-metric-card {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+        height: 120px;
+    }
+    
+    .stars {
+        color: #f1c40f;
+        font-size: 20px;
+    }
+    
+    .chart-container {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Generate sample data
+@st.cache_data
+def generate_sample_data():
+    # Monthly data for trends
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    deployment_success = [85, 87, 89, 91, 88, 92, 94, 96, 93, 95, 97, 98]
+    
+    # SIT Quality data
+    sit_quality_data = {
+        'Month': months,
+        'Quality Score': [78, 82, 85, 88, 91, 89, 93, 96, 94, 97, 95, 98]
+    }
+    
+    # Employee competency data
+    competency_data = {
+        'Role': ['Dev', 'QA', 'SA', 'BA', 'PM'],
+        'Jr': [15, 20, 25, 30, 20],
+        'Mid': [35, 30, 25, 20, 25],
+        'Sr': [30, 25, 30, 25, 30],
+        'Expert': [20, 25, 20, 25, 25]
+    }
+    
+    return deployment_success, sit_quality_data, competency_data
 
 # Header
-st.title("XYZ Indicator")
-st.date_input("Select Month", key="selected_month")
+col1, col2 = st.columns([3, 1])
+with col1:
+    st.markdown('<h1 class="main-title">XYZ Indicator</h1>', unsafe_allow_html=True)
+with col2:
+    selected_month = st.selectbox("Select Month", ["December 2025", "November 2025", "October 2025"], key="month_selector")
 
-# Row 1: Revenue, Expense, Productivity Index, Manpower Fulfillment
+st.markdown("---")
+
+# First row - Main metrics
 col1, col2, col3, col4 = st.columns(4)
-with col1:
-    kpi_card("Revenue", data["Revenue"]["value"], data["Revenue"]["target"], data["Revenue"]["change"], icon="💰")
-with col2:
-    kpi_card("Expense", data["Expense"]["value"], data["Expense"]["target"], data["Expense"]["change"], icon="💸")
-with col3:
-    kpi_card("Productivity Index", data["Productivity Index"]["value"], data["Productivity Index"]["target"], data["Productivity Index"]["change"], icon="📈")
-with col4:
-    st.metric(label="Manpower Fulfillment", value=f"{data['Manpower Fulfillment']['value']} of {data['Manpower Fulfillment']['target']}")
-    # Funnel Chart
-    labels = ['Qualified Pool', 'HC Interview', 'User Interview', 'Offering', 'Successful Hire']
-    values = [100, 70, 40, 25, 20]
-    colors = ['#FF6B6B', '#FFD166', '#1E8449', '#00BFFF', '#8E44AD']
-    fig, ax = plt.subplots()
-    ax.pie(values, labels=labels, autopct='%1.1f%%', startangle=90, colors=colors)
-    ax.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-    st.pyplot(fig)
 
-# Row 2: Number Active Customer, Product Churn Rate, Average Product CSAT, Product NPS
+with col1:
+    st.markdown("""
+    <div class="metric-card revenue">
+        <h4>Revenue</h4>
+        <div class="metric-value" style="color: #27ae60;">$20M</div>
+        <div class="metric-change">📈 12% From Last Month</div>
+        <div class="metric-target">Target $100M</div>
+        <div class="progress-bar">
+            <div class="progress-bar-fill progress-green" style="width: 20%;"></div>
+        </div>
+        <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">20%</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown("""
+    <div class="metric-card expense">
+        <h4>Expense</h4>
+        <div class="metric-value" style="color: #e67e22;">$8.5M</div>
+        <div class="metric-change">📈 5% From Last Month</div>
+        <div class="metric-target">Target $50M</div>
+        <div class="progress-bar">
+            <div class="progress-bar-fill progress-yellow" style="width: 17%;"></div>
+        </div>
+        <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">17%</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown("""
+    <div class="metric-card productivity">
+        <h4>Productivity Index</h4>
+        <div class="metric-value" style="color: #16a085;">1.88</div>
+        <div class="metric-change">📈 15% From Last Month</div>
+        <div class="metric-target">Target 2.93</div>
+        <div class="progress-bar">
+            <div class="progress-bar-fill progress-teal" style="width: 64%;"></div>
+        </div>
+        <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">64%</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col4:
+    st.markdown("""
+    <div class="metric-card manpower">
+        <h4>🔧 Manpower Fulfilment</h4>
+        <div class="metric-value" style="color: #2c3e50;">102</div>
+        <div style="color: #7f8c8d; font-size: 16px;">of 122</div>
+        <div class="progress-bar" style="margin-top: 20px;">
+            <div class="progress-bar-fill progress-gray" style="width: 67%;"></div>
+        </div>
+        <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">67%</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Recruitment Funnel
+st.markdown("### 🧑‍💼 Recruitment Funnel")
+col_funnel, col_spacer = st.columns([1, 2])
+
+with col_funnel:
+    funnel_fig = go.Figure(go.Funnel(
+        y = ["Qualified Pool", "HC Interview", "User Interview", "Offering", "Successful Hire"],
+        x = [100, 70, 40, 25, 20],
+        textinfo = "value+percent initial",
+        marker = {"color": ["#3498db", "#9b59b6", "#e74c3c", "#f39c12", "#27ae60"]}
+    ))
+    funnel_fig.update_layout(height=300, margin=dict(l=0,r=0,t=0,b=0))
+    st.plotly_chart(funnel_fig, use_container_width=True)
+
+st.markdown("---")
+
+# Second row - Performance metrics
 col1, col2, col3, col4 = st.columns(4)
-with col1:
-    kpi_card("Number Active Customer", data["Number Active Customer"]["value"], data["Number Active Customer"]["target"], data["Number Active Customer"]["change"], icon="👥")
-with col2:
-    st.metric(label="Product Churn Rate", value=f"{data['Product Churn Rate']['value']}%", delta=f"{data['Product Churn Rate']['value']}%")
-    # Gauge Chart for Churn Rate
-    fig, ax = plt.subplots()
-    ax.set_title("Product Churn Rate")
-    ax.pie([data['Product Churn Rate']['value'], 100 - data['Product Churn Rate']['value']], colors=['red', 'green'], wedgeprops=dict(width=0.3))
-    ax.text(0, 0, f"{data['Product Churn Rate']['value']}%", ha='center', va='center', fontsize=14)
-    st.pyplot(fig)
-with col3:
-    st.metric(label="Average Product CSAT", value=data["Average Product CSAT"]["value"], delta=f"{data['Average Product CSAT']['value']}/5")
-    # Star Rating
-    stars = "⭐" * int(data["Average Product CSAT"]["value"])
-    st.write(stars)
-with col4:
-    st.metric(label="Product NPS", value=f"{data['Product NPS']['value']}%", delta=f"{data['Product NPS']['value']}%")
-    # Gauge Chart for NPS
-    fig, ax = plt.subplots()
-    ax.set_title("Product NPS")
-    ax.pie([data['Product NPS']['value'], 100 - data['Product NPS']['value']], colors=['purple', 'white'], wedgeprops=dict(width=0.3))
-    ax.text(0, 0, f"{data['Product NPS']['value']}%", ha='center', va='center', fontsize=14)
-    st.pyplot(fig)
 
-# Row 3: On Time Product Delivery Rate, Defect Rate, SLA Achievement, Deployment Success Rate
-col1, col2, col3, col4 = st.columns(4)
 with col1:
-    st.metric(label="On Time Product Delivery Rate", value=f"{data['On Time Product Delivery Rate']['value']}%", delta=f"{data['On Time Product Delivery Rate']['value']}%")
-    # Circle Gauge
-    fig, ax = plt.subplots()
-    ax.set_title("On Time Product Delivery Rate")
-    ax.pie([data['On Time Product Delivery Rate']['value'], 100 - data['On Time Product Delivery Rate']['value']], colors=['green', 'white'], wedgeprops=dict(width=0.3))
-    ax.text(0, 0, f"{data['On Time Product Delivery Rate']['value']}%", ha='center', va='center', fontsize=14)
-    st.pyplot(fig)
-with col2:
-    st.metric(label="Defect Rate", value=f"{data['Defect Rate']['value']}%", delta=f"{data['Defect Rate']['value']}%")
-    # Circle Gauge
-    fig, ax = plt.subplots()
-    ax.set_title("Defect Rate")
-    ax.pie([data['Defect Rate']['value'], 100 - data['Defect Rate']['value']], colors=['red', 'green'], wedgeprops=dict(width=0.3))
-    ax.text(0, 0, f"{data['Defect Rate']['value']}%", ha='center', va='center', fontsize=14)
-    st.pyplot(fig)
-with col3:
-    st.metric(label="SLA Achievement", value=f"{data['SLA Achievement']['value']}%", delta=f"{data['SLA Achievement']['value']}%")
-    # Circle Gauge
-    fig, ax = plt.subplots()
-    ax.set_title("SLA Achievement")
-    ax.pie([data['SLA Achievement']['value'], 100 - data['SLA Achievement']['value']], colors=['green', 'white'], wedgeprops=dict(width=0.3))
-    ax.text(0, 0, f"{data['SLA Achievement']['value']}%", ha='center', va='center', fontsize=14)
-    st.pyplot(fig)
-with col4:
-    st.metric(label="Deployment Success Rate", value=f"{sum(data['Deployment Success Rate']['value'])/len(data['Deployment Success Rate']['value'])}%", delta=f"{sum(data['Deployment Success Rate']['value'])/len(data['Deployment Success Rate']['value'])}%")
-    # Line Chart
-    fig, ax = plt.subplots()
-    ax.plot(range(1, 13), data['Deployment Success Rate']['value'])
-    ax.set_xticks(range(1, 13))
-    ax.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
-    ax.set_ylabel("Success Rate (%)")
-    st.pyplot(fig)
+    st.markdown("""
+    <div class="small-metric-card">
+        <h5>👥 Number of Customer</h5>
+        <div style="font-size: 32px; font-weight: bold; color: #2c3e50;">153</div>
+        <div style="color: #27ae60; font-size: 14px;">↗️ 3 From Last Month</div>
+        <div style="color: #7f8c8d; font-size: 12px;">Target 225</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# Row 4: SIT Quality Index, Talent Turnover Rate
-col1, col2 = st.columns(2)
-with col1:
-    st.metric(label="SIT Quality Index", value="85", delta="+5")
-    # Bar Chart
-    fig, ax = plt.subplots()
-    ax.bar(["Dev", "Mid", "Sr", "Expert"], [85, 89, 85, 89])
-    ax.set_ylabel("Score")
-    st.pyplot(fig)
 with col2:
-    st.metric(label="Talent Turnover Rate", value=f"{data['Talent Turnover Rate']['value']}%", delta=f"{data['Talent Turnover Rate']['change']}%")
-    # Circle Gauge
-    fig, ax = plt.subplots()
-    ax.set_title("Talent Turnover Rate")
-    ax.pie([data['Talent Turnover Rate']['value'], 100 - data['Talent Turnover Rate']['value']], colors=['red', 'green'], wedgeprops=dict(width=0.3))
-    ax.text(0, 0, f"{data['Talent Turnover Rate']['value']}%", ha='center', va='center', fontsize=14)
-    st.pyplot(fig)
+    # Product Churn Rate Gauge
+    churn_fig = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = 7,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "Product Churn Rate"},
+        gauge = {
+            'axis': {'range': [None, 20]},
+            'bar': {'color': "#e74c3c"},
+            'steps': [
+                {'range': [0, 5], 'color': "#27ae60"},
+                {'range': [5, 10], 'color': "#f39c12"},
+                {'range': [10, 20], 'color': "#e74c3c"}
+            ],
+            'threshold': {
+                'line': {'color': "red", 'width': 4},
+                'thickness': 0.75,
+                'value': 90
+            }
+        }
+    ))
+    churn_fig.update_layout(height=200, margin=dict(l=0,r=0,t=30,b=0))
+    st.plotly_chart(churn_fig, use_container_width=True)
+
+with col3:
+    st.markdown("""
+    <div class="small-metric-card">
+        <h5>Average Product CSAT</h5>
+        <div style="font-size: 32px; font-weight: bold; color: #2c3e50;">4.0</div>
+        <div class="stars">★★★★☆</div>
+        <div style="color: #7f8c8d; font-size: 12px;">Target 4.45</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col4:
+    # Product NPS Gauge
+    nps_fig = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = 70,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "Product NPS"},
+        gauge = {
+            'axis': {'range': [None, 100]},
+            'bar': {'color': "#9b59b6"},
+            'steps': [
+                {'range': [0, 50], 'color': "#ecf0f1"},
+                {'range': [50, 100], 'color': "#d5dbdb"}
+            ],
+            'threshold': {
+                'line': {'color': "red", 'width': 4},
+                'thickness': 0.75,
+                'value': 90
+            }
+        }
+    ))
+    nps_fig.update_layout(height=200, margin=dict(l=0,r=0,t=30,b=0))
+    st.plotly_chart(nps_fig, use_container_width=True)
+
+st.markdown("---")
+
+# Employee Competency Chart
+st.markdown("### 📊 Employee Competency Fulfillment")
+deployment_success, sit_quality_data, competency_data = generate_sample_data()
+
+competency_df = pd.DataFrame(competency_data)
+competency_fig = go.Figure()
+
+colors = ['#f1c40f', '#27ae60', '#3498db', '#2c3e50']
+categories = ['Jr', 'Mid', 'Sr', 'Expert']
+
+for i, cat in enumerate(categories):
+    competency_fig.add_trace(go.Bar(
+        name=cat,
+        y=competency_df['Role'],
+        x=competency_df[cat],
+        orientation='h',
+        marker_color=colors[i]
+    ))
+
+competency_fig.update_layout(
+    barmode='stack',
+    title="Employee Competency by Role",
+    xaxis_title="Number of Employees",
+    yaxis_title="Role",
+    height=300,
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+)
+
+st.plotly_chart(competency_fig, use_container_width=True)
+
+st.markdown("---")
+
+# Bottom row - Additional metrics
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    # On Time Delivery
+    delivery_fig = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = 92,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "🚚 On Time Product Delivery Rate"},
+        gauge = {
+            'axis': {'range': [None, 100]},
+            'bar': {'color': "#27ae60"},
+            'steps': [
+                {'range': [0, 70], 'color': "#ecf0f1"},
+                {'range': [70, 100], 'color': "#d5dbdb"}
+            ]
+        }
+    ))
+    delivery_fig.update_layout(height=250, margin=dict(l=0,r=0,t=50,b=0))
+    st.plotly_chart(delivery_fig, use_container_width=True)
+    st.markdown("<div style='text-align: center; color: #7f8c8d;'>Last Month 91%</div>", unsafe_allow_html=True)
+
+with col2:
+    # Defect Rate
+    defect_fig = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = 5,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "⚠️ Defect Rate"},
+        gauge = {
+            'axis': {'range': [None, 15]},
+            'bar': {'color': "#e74c3c"},
+            'steps': [
+                {'range': [0, 3], 'color': "#27ae60"},
+                {'range': [3, 8], 'color': "#f39c12"},
+                {'range': [8, 15], 'color': "#e74c3c"}
+            ]
+        }
+    ))
+    defect_fig.update_layout(height=250, margin=dict(l=0,r=0,t=50,b=0))
+    st.plotly_chart(defect_fig, use_container_width=True)
+    st.markdown("<div style='text-align: center; color: #7f8c8d;'>Last Month 7% | Target= 0%</div>", unsafe_allow_html=True)
+
+with col3:
+    # SLA Achievement
+    sla_fig = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = 95,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "📋 SLA Achievement"},
+        gauge = {
+            'axis': {'range': [None, 100]},
+            'bar': {'color': "#27ae60"},
+            'steps': [
+                {'range': [0, 80], 'color': "#ecf0f1"},
+                {'range': [80, 100], 'color': "#d5dbdb"}
+            ]
+        }
+    ))
+    sla_fig.update_layout(height=250, margin=dict(l=0,r=0,t=50,b=0))
+    st.plotly_chart(sla_fig, use_container_width=True)
+    st.markdown("<div style='text-align: center; color: #7f8c8d;'>Last Month 95%</div>", unsafe_allow_html=True)
+
+st.markdown("---")
+
+# Final row
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    # Deployment Success Rate
+    st.markdown("### 📈 Deployment Success Rate")
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    deployment_fig = go.Figure(go.Scatter(
+        x=months,
+        y=deployment_success,
+        mode='lines+markers',
+        line=dict(color='#3498db', width=3),
+        marker=dict(size=8)
+    ))
+    deployment_fig.update_layout(
+        height=200,
+        xaxis_title="Month",
+        yaxis_title="Success Rate (%)",
+        yaxis=dict(range=[80, 100]),
+        margin=dict(l=0,r=0,t=0,b=0)
+    )
+    st.plotly_chart(deployment_fig, use_container_width=True)
+
+with col2:
+    # SIT Quality Index
+    st.markdown("### 📊 SIT Quality Index")
+    sit_df = pd.DataFrame(sit_quality_data)
+    sit_fig = go.Figure(go.Bar(
+        x=sit_df['Month'],
+        y=sit_df['Quality Score'],
+        marker_color='#16a085'
+    ))
+    sit_fig.update_layout(
+        height=200,
+        xaxis_title="Month",
+        yaxis_title="Quality Score",
+        margin=dict(l=0,r=0,t=0,b=0)
+    )
+    st.plotly_chart(sit_fig, use_container_width=True)
+
+with col3:
+    # Talent Turnover Rate
+    st.markdown("### 🔄 Talent Turnover Rate")
+    turnover_fig = go.Figure(go.Indicator(
+        mode = "gauge+number",
+        value = 7,
+        domain = {'x': [0, 1], 'y': [0, 1]},
+        title = {'text': "100 employees"},
+        gauge = {
+            'axis': {'range': [None, 20]},
+            'bar': {'color': "#e74c3c"},
+            'steps': [
+                {'range': [0, 5], 'color': "#27ae60"},
+                {'range': [5, 10], 'color': "#f39c12"},
+                {'range': [10, 20], 'color': "#e74c3c"}
+            ]
+        }
+    ))
+    turnover_fig.update_layout(height=200, margin=dict(l=0,r=0,t=30,b=0))
+    st.plotly_chart(turnover_fig, use_container_width=True)
+    st.markdown("<div style='text-align: center; color: #27ae60;'>📉 5% From Last Month</div>", unsafe_allow_html=True)
+
+# Footer
+st.markdown("---")
+st.markdown(
+    "<div style='text-align: center; color: #7f8c8d; padding: 20px;'>XYZ Indicator Dashboard - Business Intelligence Platform</div>",
+    unsafe_allow_html=True
+)
