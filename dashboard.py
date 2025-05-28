@@ -117,7 +117,7 @@ st.markdown("""
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         margin-bottom: 10px;
-        height: 140px;
+        height: 160px;
         display: flex;
         flex-direction: column;
     }
@@ -126,6 +126,7 @@ st.markdown("""
         margin: 0 0 5px 0;
         font-size: 0.8rem;
         color: #2c3e50;
+        flex-shrink: 0;
     }
     
     .small-chart-container {
@@ -133,7 +134,7 @@ st.markdown("""
         padding: 8px;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        height: 120px;
+        height: 160px;
         display: flex;
         flex-direction: column;
     }
@@ -142,6 +143,7 @@ st.markdown("""
         margin: 0 0 3px 0;
         font-size: 0.75rem;
         color: #2c3e50;
+        flex-shrink: 0;
     }
     
     /* Responsive font sizes */
@@ -270,7 +272,7 @@ with col5:
         textfont = {"size": 10},
         marker = {"color": ["#3498db", "#9b59b6", "#e74c3c", "#f39c12", "#27ae60"]}
     ))
-    funnel_fig.update_layout(height=120, margin=dict(l=0,r=0,t=0,b=0))
+    funnel_fig.update_layout(height=140, margin=dict(l=0,r=0,t=0,b=0))
     st.plotly_chart(funnel_fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -304,7 +306,7 @@ with col2:
             ]
         }
     ))
-    churn_fig.update_layout(height=85, margin=dict(l=0,r=0,t=0,b=0))
+    churn_fig.update_layout(height=135, margin=dict(l=0,r=0,t=0,b=0))
     st.plotly_chart(churn_fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -334,7 +336,7 @@ with col4:
             ]
         }
     ))
-    nps_fig.update_layout(height=85, margin=dict(l=0,r=0,t=0,b=0))
+    nps_fig.update_layout(height=135, margin=dict(l=0,r=0,t=0,b=0))
     st.plotly_chart(nps_fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
