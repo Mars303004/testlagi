@@ -11,7 +11,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for responsive and aligned layout
+# Custom CSS untuk responsivitas dan alignment
 st.markdown("""
 <style>
     .main .block-container {
@@ -169,7 +169,7 @@ with col2:
     churn_fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=7,
-        number={'font': {'size': 18}},
+        number={'font': {'size: 18'}},
         domain={'x': [0, 1], 'y': [0, 1]},
         gauge={
             'axis': {'range': [None, 20], 'tickfont': {'size': 8}},
@@ -223,7 +223,7 @@ with col1:
     colors = ['#f1c40f', '#27ae60', '#3498db', '#2c3e50']
     for i, cat in enumerate(['Jr', 'Mid', 'Sr', 'Expert']):
         comp_fig.add_trace(go.Bar(name=cat, y=comp_df['Role'], x=comp_df[cat], orientation='h',
-                                 marker_color=colors[i], text=comp_df[cat], textposition='inside'))
+                                  marker_color=colors[i], text=comp_df[cat], textposition='inside'))
     comp_fig.update_layout(barmode='stack', showlegend=True, legend=dict(orientation="h", y=1.02),
                            xaxis={'tickfont': {'size': 8}}, yaxis={'tickfont': {'size': 8}})
     comp_fig.update_layout(height=110, margin=dict(l=0, r=0, t=0, b=0))
