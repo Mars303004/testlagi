@@ -139,8 +139,8 @@ with col2:
 
 st.markdown("---")
 
-# First row - Main metrics
-col1, col2, col3, col4 = st.columns(4)
+# First row - Main metrics with recruitment funnel
+col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
 
 with col1:
     st.markdown("""
@@ -197,19 +197,18 @@ with col4:
     </div>
     """, unsafe_allow_html=True)
 
-# Recruitment Funnel
-st.markdown("### 🧑‍💼 Recruitment Funnel")
-col_funnel, col_spacer = st.columns([1, 2])
-
-with col_funnel:
+with col5:
+    # Recruitment Funnel
+    st.markdown('<div class="chart-container"><h5>🧑‍💼 Recruitment Funnel</h5>', unsafe_allow_html=True)
     funnel_fig = go.Figure(go.Funnel(
         y = ["Qualified Pool", "HC Interview", "User Interview", "Offering", "Successful Hire"],
         x = [100, 70, 40, 25, 20],
         textinfo = "value+percent initial",
         marker = {"color": ["#3498db", "#9b59b6", "#e74c3c", "#f39c12", "#27ae60"]}
     ))
-    funnel_fig.update_layout(height=300, margin=dict(l=0,r=0,t=0,b=0))
+    funnel_fig.update_layout(height=250, margin=dict(l=0,r=0,t=0,b=0))
     st.plotly_chart(funnel_fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -228,11 +227,11 @@ with col1:
 
 with col2:
     # Product Churn Rate Gauge
+    st.markdown('<div class="chart-container"><h5>Product Churn Rate</h5>', unsafe_allow_html=True)
     churn_fig = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = 7,
         domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "Product Churn Rate"},
         gauge = {
             'axis': {'range': [None, 20]},
             'bar': {'color': "#e74c3c"},
@@ -248,8 +247,9 @@ with col2:
             }
         }
     ))
-    churn_fig.update_layout(height=200, margin=dict(l=0,r=0,t=30,b=0))
+    churn_fig.update_layout(height=150, margin=dict(l=0,r=0,t=0,b=0))
     st.plotly_chart(churn_fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col3:
     st.markdown("""
@@ -263,11 +263,11 @@ with col3:
 
 with col4:
     # Product NPS Gauge
+    st.markdown('<div class="chart-container"><h5>Product NPS</h5>', unsafe_allow_html=True)
     nps_fig = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = 70,
         domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "Product NPS"},
         gauge = {
             'axis': {'range': [None, 100]},
             'bar': {'color': "#9b59b6"},
@@ -282,8 +282,9 @@ with col4:
             }
         }
     ))
-    nps_fig.update_layout(height=200, margin=dict(l=0,r=0,t=30,b=0))
+    nps_fig.update_layout(height=150, margin=dict(l=0,r=0,t=0,b=0))
     st.plotly_chart(nps_fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -319,16 +320,16 @@ st.plotly_chart(competency_fig, use_container_width=True)
 
 st.markdown("---")
 
-# Bottom row - Additional metrics
+# Bottom metrics row
 col1, col2, col3 = st.columns(3)
 
 with col1:
     # On Time Delivery
+    st.markdown('<div class="chart-container"><h5>🚚 On Time Product Delivery Rate</h5>', unsafe_allow_html=True)
     delivery_fig = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = 92,
         domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "🚚 On Time Product Delivery Rate"},
         gauge = {
             'axis': {'range': [None, 100]},
             'bar': {'color': "#27ae60"},
@@ -338,17 +339,17 @@ with col1:
             ]
         }
     ))
-    delivery_fig.update_layout(height=250, margin=dict(l=0,r=0,t=50,b=0))
+    delivery_fig.update_layout(height=200, margin=dict(l=0,r=0,t=0,b=0))
     st.plotly_chart(delivery_fig, use_container_width=True)
-    st.markdown("<div style='text-align: center; color: #7f8c8d;'>Last Month 91%</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; color: #7f8c8d;'>Last Month 91%</div></div>", unsafe_allow_html=True)
 
 with col2:
     # Defect Rate
+    st.markdown('<div class="chart-container"><h5>⚠️ Defect Rate</h5>', unsafe_allow_html=True)
     defect_fig = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = 5,
         domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "⚠️ Defect Rate"},
         gauge = {
             'axis': {'range': [None, 15]},
             'bar': {'color': "#e74c3c"},
@@ -359,17 +360,17 @@ with col2:
             ]
         }
     ))
-    defect_fig.update_layout(height=250, margin=dict(l=0,r=0,t=50,b=0))
+    defect_fig.update_layout(height=200, margin=dict(l=0,r=0,t=0,b=0))
     st.plotly_chart(defect_fig, use_container_width=True)
-    st.markdown("<div style='text-align: center; color: #7f8c8d;'>Last Month 7% | Target= 0%</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; color: #7f8c8d;'>Last Month 7% | Target= 0%</div></div>", unsafe_allow_html=True)
 
 with col3:
-    # SLA Achievement
+    # SLA Achievement  
+    st.markdown('<div class="chart-container"><h5>📋 SLA Achievement</h5>', unsafe_allow_html=True)
     sla_fig = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = 95,
         domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "📋 SLA Achievement"},
         gauge = {
             'axis': {'range': [None, 100]},
             'bar': {'color': "#27ae60"},
@@ -379,18 +380,21 @@ with col3:
             ]
         }
     ))
-    sla_fig.update_layout(height=250, margin=dict(l=0,r=0,t=50,b=0))
+    sla_fig.update_layout(height=200, margin=dict(l=0,r=0,t=0,b=0))
     st.plotly_chart(sla_fig, use_container_width=True)
-    st.markdown("<div style='text-align: center; color: #7f8c8d;'>Last Month 95%</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; color: #7f8c8d;'>Last Month 95%</div></div>", unsafe_allow_html=True)
 
 st.markdown("---")
 
-# Final row
+# Final row - Charts section
+st.markdown("---")
+
+# Three charts in one row
 col1, col2, col3 = st.columns(3)
 
 with col1:
     # Deployment Success Rate
-    st.markdown("### 📈 Deployment Success Rate")
+    st.markdown('<div class="chart-container"><h5>📈 Deployment Success Rate</h5>', unsafe_allow_html=True)
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     deployment_fig = go.Figure(go.Scatter(
         x=months,
@@ -407,10 +411,11 @@ with col1:
         margin=dict(l=0,r=0,t=0,b=0)
     )
     st.plotly_chart(deployment_fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
     # SIT Quality Index
-    st.markdown("### 📊 SIT Quality Index")
+    st.markdown('<div class="chart-container"><h5>📊 SIT Quality Index</h5>', unsafe_allow_html=True)
     sit_df = pd.DataFrame(sit_quality_data)
     sit_fig = go.Figure(go.Bar(
         x=sit_df['Month'],
@@ -424,10 +429,11 @@ with col2:
         margin=dict(l=0,r=0,t=0,b=0)
     )
     st.plotly_chart(sit_fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col3:
     # Talent Turnover Rate
-    st.markdown("### 🔄 Talent Turnover Rate")
+    st.markdown('<div class="chart-container"><h5>🔄 Talent Turnover Rate</h5>', unsafe_allow_html=True)
     turnover_fig = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = 7,
@@ -443,9 +449,9 @@ with col3:
             ]
         }
     ))
-    turnover_fig.update_layout(height=200, margin=dict(l=0,r=0,t=30,b=0))
+    turnover_fig.update_layout(height=150, margin=dict(l=0,r=0,t=30,b=0))
     st.plotly_chart(turnover_fig, use_container_width=True)
-    st.markdown("<div style='text-align: center; color: #27ae60;'>📉 5% From Last Month</div>", unsafe_allow_html=True)
+    st.markdown("<div style='text-align: center; color: #27ae60;'>📉 5% From Last Month</div></div>", unsafe_allow_html=True)
 
 # Footer
 st.markdown("---")
