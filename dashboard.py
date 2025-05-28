@@ -59,7 +59,7 @@ st.markdown("""
         padding: 10px;
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        height: 140px;
+        height: 160px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -69,12 +69,11 @@ st.markdown("""
         font-size: 0.8rem;
         color: #2c3e50;
     }
-    @media (max-width: 1200px) {
-        .main-title { font-size: 2rem; }
-        .metric-card,
-        .small-metric-card,
+    @media (max-height: 800px) {
         .chart-container,
-        .small-chart-container {
+        .small-chart-container,
+        .metric-card,
+        .small-metric-card {
             height: 120px;
         }
     }
@@ -224,30 +223,30 @@ with col1:
     colors = ['#f1c40f', '#27ae60', '#3498db', '#2c3e50']
     for i, cat in enumerate(['Jr', 'Mid', 'Sr', 'Expert']):
         comp_fig.add_trace(go.Bar(name=cat, y=comp_df['Role'], x=comp_df[cat], orientation='h',
-                                  marker_color=colors[i], text=comp_df[cat], textposition='inside'))
+                                 marker_color=colors[i], text=comp_df[cat], textposition='inside'))
     comp_fig.update_layout(barmode='stack', showlegend=True, legend=dict(orientation="h", y=1.02),
-                            xaxis={'tickfont': {'size': 8}}, yaxis={'tickfont': {'size': 8}})
+                           xaxis={'tickfont': {'size': 8}}, yaxis={'tickfont': {'size': 8}})
     comp_fig.update_layout(height=110, margin=dict(l=0, r=0, t=0, b=0))
     st.plotly_chart(comp_fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 with col2:
     st.markdown('<div class="small-chart-container"><h5>🚚 On Time Delivery</h5>', unsafe_allow_html=True)
     delivery_fig = go.Figure(go.Indicator(mode="gauge+number", value=92, number={'font': {'size': 16}},
-                                    gauge={'axis': {'range': [None, 100]}, 'bar': {'color': "#27ae60"}}))
+                             gauge={'axis': {'range': [None, 100]}, 'bar': {'color': "#27ae60"}}))
     delivery_fig.update_layout(height=110, margin=dict(l=0, r=0, t=0, b=0))
     st.plotly_chart(delivery_fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 with col3:
     st.markdown('<div class="small-chart-container"><h5>⚠️ Defect Rate</h5>', unsafe_allow_html=True)
     defect_fig = go.Figure(go.Indicator(mode="gauge+number", value=5, number={'font': {'size': 16}},
-                                   gauge={'axis': {'range': [None, 15]}, 'bar': {'color': "#e74c3c"}}))
+                           gauge={'axis': {'range': [None, 15]}, 'bar': {'color': "#e74c3c"}}))
     defect_fig.update_layout(height=110, margin=dict(l=0, r=0, t=0, b=0))
     st.plotly_chart(defect_fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 with col4:
     st.markdown('<div class="small-chart-container"><h5>📋 SLA Achievement</h5>', unsafe_allow_html=True)
     sla_fig = go.Figure(go.Indicator(mode="gauge+number", value=95, number={'font': {'size': 16}},
-                               gauge={'axis': {'range': [None, 100]}, 'bar': {'color': "#27ae60"}}))
+                        gauge={'axis': {'range': [None, 100]}, 'bar': {'color': "#27ae60"}}))
     sla_fig.update_layout(height=110, margin=dict(l=0, r=0, t=0, b=0))
     st.plotly_chart(sla_fig, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
